@@ -4,17 +4,19 @@
  * Each alert shows direction, amount, tier badge, addresses, and time
  */
 import { ArrowDownLeft, ArrowUpRight, ExternalLink, Copy, Check } from "lucide-react";
-import { formatFullNumber, shortenAddress, timeAgo, getEtherscanTxUrl } from "@/lib/utils";
+import { formatFullNumber, shortenAddress, timeAgo, getExplorerTxUrl } from "@/lib/utils";
 import type { ProcessedTransfer } from "@/lib/types";
+import type { AssetConfig } from "../../../shared/const";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useCallback } from "react";
 
 interface TransferFeedProps {
   transfers: ProcessedTransfer[];
   isLoading: boolean;
+  asset: AssetConfig;
 }
 
-function TransferRow({ tx, index }: { tx: ProcessedTransfer; index: number }) {
+function TransferRow({ tx, index, asset }: { tx: ProcessedTransfer; index: number; asset: AssetConfig }) {
   const [copied, setCopied] = useState(false);
   const isInflow = tx.direction === "inflow";
 
@@ -30,6 +32,8 @@ function TransferRow({ tx, index }: { tx: ProcessedTransfer; index: number }) {
       : tx.tier === "100K+"
       ? "tier-badge-100k"
       : "tier-badge-50k";
+
+  const explorerLabel = asset.chain === "solana" ? "View on Solscan" : "View on Etherscan";
 
   return (
     <motion.div
@@ -76,7 +80,7 @@ function TransferRow({ tx, index }: { tx: ProcessedTransfer; index: number }) {
                 }`}
               >
                 {isInflow ? "+" : "-"}
-                {formatFullNumber(tx.amount)} STO
+                {formatFullNumber(tx.amount)} {tx.symbol}
               </span>
               <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${tierBadgeClass}`}>
                 {tx.tier}
@@ -94,7 +98,7 @@ function TransferRow({ tx, index }: { tx: ProcessedTransfer; index: number }) {
             </div>
 
             <p className="text-[10px] text-muted-foreground/60 mt-1">
-              {tx.binanceWalletLabel}
+              {tx.exchangeWalletLabel}
             </p>
           </div>
         </div>
@@ -118,11 +122,11 @@ function TransferRow({ tx, index }: { tx: ProcessedTransfer; index: number }) {
               )}
             </button>
             <a
-              href={getEtherscanTxUrl(tx.hash)}
+              href={getExplorerTxUrl(asset, tx.hash)}
               target="_blank"
               rel="noopener noreferrer"
               className="p-1 rounded hover:bg-secondary transition-colors"
-              title="View on Etherscan"
+              title={explorerLabel}
             >
               <ExternalLink className="w-3 h-3 text-muted-foreground" />
             </a>
@@ -133,7 +137,7 @@ function TransferRow({ tx, index }: { tx: ProcessedTransfer; index: number }) {
   );
 }
 
-export default function TransferFeed({ transfers, isLoading }: TransferFeedProps) {
+export default function TransferFeed({ transfers, isLoading, asset }: TransferFeedProps) {
   if (isLoading && transfers.length === 0) {
     return (
       <div className="space-y-3">
@@ -162,8 +166,8 @@ export default function TransferFeed({ transfers, isLoading }: TransferFeedProps
           No Large Transfers Detected
         </h3>
         <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-          No STO transfers above 50K have been detected to or from Binance in the
-          last hour. The feed will update automatically when new transfers occur.
+          No {asset.symbol} transfers above 50K have been detected to or from {asset.exchangeLabel} in the
+          selected time window. The feed will update automatically when new transfers occur.
         </p>
       </div>
     );
@@ -181,7 +185,7 @@ export default function TransferFeed({ transfers, isLoading }: TransferFeedProps
       </div>
       <AnimatePresence mode="popLayout">
         {transfers.map((tx, i) => (
-          <TransferRow key={tx.id} tx={tx} index={i} />
+          <TransferRow key={tx.id} tx={tx} index={i} asset={asset} />
         ))}
       </AnimatePresence>
     </div>

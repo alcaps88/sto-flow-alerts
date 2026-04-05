@@ -1,17 +1,20 @@
 /*
  * Design: Obsidian Flow — Dark Luxury Financial Dashboard
- * Header: Minimal top bar with branding, live status indicator, and time window badge
+ * Header: Minimal top bar with branding, live status indicator, and dynamic asset/time info
  */
 import { Activity, RefreshCw } from "lucide-react";
 import { formatTime } from "@/lib/utils";
+import type { AssetConfig, TimeRangeOption } from "../../../shared/const";
 
 interface HeaderProps {
   isLoading: boolean;
   lastFetched: number | null;
   onRefresh: () => void;
+  asset: AssetConfig;
+  timeRange: TimeRangeOption;
 }
 
-export default function Header({ isLoading, lastFetched, onRefresh }: HeaderProps) {
+export default function Header({ isLoading, lastFetched, onRefresh, asset, timeRange }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 glass-panel">
       <div className="container flex items-center justify-between h-16">
@@ -25,10 +28,10 @@ export default function Header({ isLoading, lastFetched, onRefresh }: HeaderProp
           </div>
           <div>
             <h1 className="text-base font-semibold tracking-tight leading-tight">
-              STO Flow Alerts
+              Flow Alerts
             </h1>
             <p className="text-[11px] text-muted-foreground font-mono">
-              StakeStone &middot; Binance Exchange
+              {asset.symbol} &middot; {asset.exchangeLabel}
             </p>
           </div>
         </div>
@@ -39,7 +42,14 @@ export default function Header({ isLoading, lastFetched, onRefresh }: HeaderProp
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/50 border border-border/50">
             <div className="w-1.5 h-1.5 rounded-full bg-[oklch(0.79_0.15_175)] animate-pulse" />
             <span className="text-xs font-mono text-muted-foreground">
-              1H Window
+              {timeRange.label} Window
+            </span>
+          </div>
+
+          {/* Chain badge */}
+          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-secondary/50 border border-border/50">
+            <span className="text-[10px] font-mono text-muted-foreground uppercase">
+              {asset.chain === "ethereum" ? "ETH" : "SOL"}
             </span>
           </div>
 

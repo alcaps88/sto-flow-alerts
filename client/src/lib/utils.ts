@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { AssetConfig } from "../../../shared/const";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -25,6 +26,10 @@ export function formatFullNumber(num: number): string {
 
 export function shortenAddress(address: string): string {
   if (!address) return "";
+  if (address.length > 20) {
+    // Solana addresses are longer
+    return `${address.slice(0, 4)}...${address.slice(-4)}`;
+  }
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
@@ -46,6 +51,6 @@ export function formatTime(timestamp: number): string {
   });
 }
 
-export function getEtherscanTxUrl(hash: string): string {
-  return `https://etherscan.io/tx/${hash}`;
+export function getExplorerTxUrl(asset: AssetConfig, hash: string): string {
+  return asset.explorerTxUrl(hash);
 }

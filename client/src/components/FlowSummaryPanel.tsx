@@ -11,9 +11,11 @@ import FlowChart from "./FlowChart";
 interface FlowSummaryPanelProps {
   summary: FlowSummary | null;
   isLoading: boolean;
+  symbol: string;
+  timeLabel: string;
 }
 
-export default function FlowSummaryPanel({ summary, isLoading }: FlowSummaryPanelProps) {
+export default function FlowSummaryPanel({ summary, isLoading, symbol, timeLabel }: FlowSummaryPanelProps) {
   if (isLoading && !summary) {
     return (
       <div className="space-y-4">
@@ -59,7 +61,7 @@ export default function FlowSummaryPanel({ summary, isLoading }: FlowSummaryPane
               <Minus className="w-4 h-4 text-muted-foreground" />
             )}
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Net Flow (1H)
+              Net Flow ({timeLabel})
             </span>
           </div>
           <p
@@ -71,7 +73,7 @@ export default function FlowSummaryPanel({ summary, isLoading }: FlowSummaryPane
             {formatNumber(summary.netFlow)}
           </p>
           <p className="text-xs text-muted-foreground mt-1 font-mono">
-            {formatFullNumber(Math.abs(summary.netFlow))} STO
+            {formatFullNumber(Math.abs(summary.netFlow))} {symbol}
           </p>
         </div>
       </motion.div>
@@ -100,7 +102,7 @@ export default function FlowSummaryPanel({ summary, isLoading }: FlowSummaryPane
           {formatNumber(summary.totalInflow)}
         </p>
         <p className="text-xs text-muted-foreground mt-0.5 font-mono">
-          {formatFullNumber(summary.totalInflow)} STO
+          {formatFullNumber(summary.totalInflow)} {symbol}
         </p>
       </motion.div>
 
@@ -128,7 +130,7 @@ export default function FlowSummaryPanel({ summary, isLoading }: FlowSummaryPane
           {formatNumber(summary.totalOutflow)}
         </p>
         <p className="text-xs text-muted-foreground mt-0.5 font-mono">
-          {formatFullNumber(summary.totalOutflow)} STO
+          {formatFullNumber(summary.totalOutflow)} {symbol}
         </p>
       </motion.div>
 

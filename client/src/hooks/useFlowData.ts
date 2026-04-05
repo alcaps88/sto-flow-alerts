@@ -1,21 +1,25 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-  fetchAllBinanceTransfers,
+  fetchExchangeTransfers,
   filterByTimeWindow,
   computeSummary,
 } from "@/lib/etherscan";
 import type { ProcessedTransfer, FlowSummary } from "@/lib/types";
-import { POLL_INTERVAL, TIME_WINDOW } from "../../../shared/const";
+import type { AssetConfig, TimeRangeOption } from "../../../shared/const";
+import { POLL_INTERVAL } from "../../../shared/const";
 import { formatFullNumber } from "@/lib/utils";
 
 function sendNotification(tx: ProcessedTransfer) {
   if ("Notification" in window && Notification.permission === "granted") {
     const direction = tx.direction === "inflow" ? "INFLOW" : "OUTFLOW";
     const icon = tx.direction === "inflow" ? "\u2B07" : "\u2B06";
-    new Notification(`${icon} STO ${direction}: ${formatFullNumber(tx.amount)} STO`, {
-      body: `${tx.tier} transfer ${tx.direction === "inflow" ? "to" : "from"} ${tx.binanceWalletLabel}`,
-      tag: tx.id,
-    });
+    new Notification(
+      `${icon} ${tx.symbol} ${direction}: ${formatFullNumber(tx.amount)} ${tx.symbol}`,
+      {
+        body: `${tx.tier} transfer ${tx.direction === "inflow" ? "to" : "from"} ${tx.exchangeWalletLabel}`,
+        tag: tx.id,
+      }
+    );
   }
 }
 
@@ -28,7 +32,10 @@ interface UseFlowDataReturn {
   refresh: () => void;
 }
 
-export function useFlowData(): UseFlowDataReturn {
+export function useFlowData(
+  asset: AssetConfig,
+  timeRange: TimeRangeOption
+): UseFlowDataReturn {
   const [allTransfers, setAllTransfers] = useState<ProcessedTransfer[]>([]);
   const [transfers, setTransfers] = useState<ProcessedTransfer[]>([]);
   const [summary, setSummary] = useState<FlowSummary | null>(null);
@@ -39,27 +46,37 @@ export function useFlowData(): UseFlowDataReturn {
   const knownHashesRef = useRef<Set<string>>(new Set());
   const isFirstFetchRef = useRef(true);
 
+  // Reset state when asset or time range changes
+  useEffect(() => {
+    setAllTransfers([]);
+    setTransfers([]);
+    setSummary(null);
+    setIsLoading(true);
+    setError(null);
+    setLastFetched(null);
+    knownHashesRef.current = new Set();
+    isFirstFetchRef.current = true;
+  }, [asset.id, timeRange.hours]);
+
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const data = await fetchAllBinanceTransfers();
+      const data = await fetchExchangeTransfers(asset, timeRange.ms);
       setAllTransfers(data);
 
-      const filtered = filterByTimeWindow(data, TIME_WINDOW);
+      const filtered = filterByTimeWindow(data, timeRange.ms);
 
       // Check for new transfers and send browser notifications
       if (!isFirstFetchRef.current) {
         for (const tx of filtered) {
           if (!knownHashesRef.current.has(tx.id)) {
-            // New transfer detected!
             sendNotification(tx);
           }
         }
       }
 
-      // Update known hashes
       knownHashesRef.current = new Set(filtered.map((t) => t.id));
       isFirstFetchRef.current = false;
 
@@ -73,20 +90,20 @@ export function useFlowData(): UseFlowDataReturn {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [asset, timeRange]);
 
   // Recompute filtered data when time passes (every 10s)
   useEffect(() => {
     if (allTransfers.length === 0) return;
 
     const recomputeInterval = setInterval(() => {
-      const filtered = filterByTimeWindow(allTransfers, TIME_WINDOW);
+      const filtered = filterByTimeWindow(allTransfers, timeRange.ms);
       setTransfers(filtered);
       setSummary(computeSummary(filtered));
     }, 10_000);
 
     return () => clearInterval(recomputeInterval);
-  }, [allTransfers]);
+  }, [allTransfers, timeRange.ms]);
 
   // Initial fetch and polling
   useEffect(() => {

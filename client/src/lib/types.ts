@@ -1,18 +1,6 @@
-export type FlowDirection = "inflow" | "outflow";
+import type { ChainType } from "../../../shared/const";
 
-export interface TokenTransfer {
-  hash: string;
-  blockNumber: string;
-  timeStamp: string;
-  from: string;
-  to: string;
-  value: string;
-  tokenName: string;
-  tokenSymbol: string;
-  tokenDecimal: string;
-  gasPrice: string;
-  gasUsed: string;
-}
+export type FlowDirection = "inflow" | "outflow";
 
 export interface ProcessedTransfer {
   id: string;
@@ -22,8 +10,12 @@ export interface ProcessedTransfer {
   amount: number;
   from: string;
   to: string;
-  binanceWalletLabel: string;
+  exchangeWalletLabel: string;
   tier: "50K+" | "100K+" | "250K+" | null;
+  /** Which asset this transfer belongs to */
+  assetId: string;
+  symbol: string;
+  chain: ChainType;
 }
 
 export interface TierSummary {
